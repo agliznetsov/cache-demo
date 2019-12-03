@@ -1,0 +1,26 @@
+version: "3"
+services:
+  demo2:
+    image: alpine:3.7
+    command: "ping 8.8.8.8"
+
+  demo0:
+    image: cache-demo
+    environment:
+      CACHE_MODE: REPL_SYNC
+      RUN_MODE: write
+
+  demo1:
+    image: cache-demo
+    environment:
+      CACHE_MODE: REPL_SYNC
+      RUN_MODE: read
+
+  chaos-delay:
+    image: gaiaadm/pumba
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: "--log-level debug --interval 600s netem --tc-image gaiadocker/iproute2 --duration 599s delay --time 10 re2:.*demo.*"
+#    depends_on:
+#      - demo0
+#      - demo1

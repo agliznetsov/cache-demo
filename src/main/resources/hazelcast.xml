@@ -1,0 +1,21 @@
+<hazelcast xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://www.hazelcast.com/schema/config
+                               http://www.hazelcast.com/schema/config/hazelcast-config-4.0.xsd"
+           xmlns="http://www.hazelcast.com/schema/config">
+<properties>
+        <property name="hazelcast.logging.type">slf4j</property>
+    </properties>
+    <network>
+        <port auto-increment="true">5705</port>
+        <join>
+            <multicast enabled="false">
+            </multicast>
+            <tcp-ip enabled="true">
+<!--                <member>192.168.1.28:5701</member>-->
+<!--                <member>192.168.1.28:5702</member>-->
+                <member>localhost:5705</member>
+<!--                <member>localhost:5702</member>-->
+            </tcp-ip>
+        </join>
+    </network>
+</hazelcast>

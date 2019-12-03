@@ -1,0 +1,40 @@
+logging:
+  level:
+    root: info
+    org.hibernate: info
+
+spring:
+  jpa:
+    show-sql: true
+    properties:
+#      javax:
+#        persistence:
+#          sharedCache:
+#            #required - enable selective caching mode - only entities using @Cacheable annotation will use L2 cache.
+#            mode: ALL
+      hibernate:
+        format_sql: false
+        #optional - generate statistics to check if L2/query cache is actually being used.
+        generate_statistics: false
+        cache:
+          use_query_cache: true
+        javax:
+          cache:
+            missing_cache_strategy: create
+          use_second_level_cache: true
+          region:
+            #required - classpath to cache region factory.
+            factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
+    hibernate:
+      ddl-auto: update
+
+
+  datasource:
+    url: "jdbc:postgresql://${DB_HOST}/demo"
+    username: demo
+    password: demo
+
+demo:
+  cache:
+    tc-host: "${TC_HOST}"
+    consistency: "${CACHE_CONSISTENCY}"
