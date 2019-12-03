@@ -28,21 +28,10 @@ alone:
 write: 0.01 read: 0.01
 ```
 
-Infinispan:
-replicated_sync:
-write: e-4
-write: 0.1 read: e-4
-write: 0.2 read: e-4, e-4
-write: 0.3 read: e-4, e-4, e-4
-
-replicated_async:
-write: e-4
-write: 0.07 read: e-4
-write: 0.14 read: e-4, e-4
-write: 0.18 read: e-4, e-4, e-4
-
-invalidated sync:
-write e-4
-write 0.06
-write 0.1
-write 0.13
+### Infinispan:
+read: e-4
+write:
+replicate_sync: 3 - 6 ms
+replicate_async: 3 - 6 ms
+invalidate_sync: 3 - 6 ms
+invalidate_async: 0.04, 0.08, 0.15, 0.3
