@@ -9,4 +9,7 @@ public abstract class CacheNames {
 
 	public static final String RESOURCE = "Resource";
 	public static final String RESOURCE_FIND_BY_NAME = "ResourceFindByName";
+
+	public static final String ASIDE = "aside";
+
 }

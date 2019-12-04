@@ -13,18 +13,21 @@ spring:
 #            #required - enable selective caching mode - only entities using @Cacheable annotation will use L2 cache.
 #            mode: ALL
       hibernate:
+        dialect: org.hibernate.dialect.PostgreSQL10Dialect
         format_sql: false
         #optional - generate statistics to check if L2/query cache is actually being used.
         generate_statistics: false
         cache:
-          use_query_cache: true
+          use_query_cache: false
+          region:
+            factory_class: org.hibernate.cache.jcache.internal.JCacheRegionFactory
         javax:
           cache:
             missing_cache_strategy: create
           use_second_level_cache: true
           region:
             #required - classpath to cache region factory.
-            factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
+            factory_class: org.hibernate.cache.jcache.internal.JCacheRegionFactory
     hibernate:
       ddl-auto: update
 
@@ -36,5 +39,5 @@ spring:
 
 demo:
   cache:
-    tc-host: "${TC_HOST}"
     consistency: "${CACHE_CONSISTENCY}"
+

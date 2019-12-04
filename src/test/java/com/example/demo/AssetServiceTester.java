@@ -2,18 +2,24 @@ package com.example.demo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.cache.Cache;
 import javax.cache.CacheManager;
+import javax.transaction.TransactionManager;
 
+import org.infinispan.manager.EmbeddedCacheManager;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 
+import com.example.demo.config.CacheNames;
 import com.example.demo.service.AssetCache;
 import com.example.demo.service.AssetService;
 import com.example.demo.service.CacheService;
@@ -31,6 +37,8 @@ class AssetServiceTester extends BaseTest {
 	CacheManager cacheManager;
 	@Autowired
 	AssetCache assetCache;
+	@Autowired
+	EmbeddedCacheManager embeddedCacheManager;
 
 	@BeforeEach
 	void setUp() {
@@ -87,10 +95,49 @@ class AssetServiceTester extends BaseTest {
 
 		cacheService.clearStats();
 
-		for (int i = 0; i < 1000; i++) {
-			assetService.findById(random.nextInt(10));
+		long sum = 0;
+		for (int i = 0; i < 100; i++) {
+			sum += assetService.findById(random.nextInt(10)).get().getId();
 		}
+		log.info("Sum: {}", sum);
 		cacheService.printStats();
+	}
+
+	@Test
+	void testCacheAsideCommit() {
+		String key = UUID.randomUUID().toString();
+		assetService.cachePut(key, "value", false);
+		assertEquals("value", assetService.cacheGet(key));
+	}
+
+	@Test
+	@Disabled // not working because infinispan use JTA txManager and not spring one
+	void testCacheAsideRollback() {
+		String key = UUID.randomUUID().toString();
+		tryCatch(() -> assetService.cachePut(key, "value", true));
+		assertNull(assetService.cacheGet(key));
+	}
+
+	@Test
+	void testTxManager() throws Exception {
+		String key = UUID.randomUUID().toString();
+		org.infinispan.Cache<Object,Object> cache = embeddedCacheManager.getCache(CacheNames.ASIDE);
+		TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
+		tm.begin();
+		cache.put(key, "value");
+		tm.rollback();
+		assertNull(cache.get(key));
+	}
+
+	@Test
+	void testCacheLimit() {
+		Cache cache = cacheManager.getCache(CacheNames.ASIDE);
+		for (int i = 0; i < 20; i++) {
+			cache.put(String.valueOf(i), String.valueOf(i));
+		}
+		AtomicInteger counter = new AtomicInteger();
+		cache.iterator().forEachRemaining((e) -> counter.incrementAndGet());
+		assertEquals(10, counter.get());
 	}
 
 }

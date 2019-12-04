@@ -1,5 +1,6 @@
 package com.example.demo;
 
+import static com.example.demo.config.CacheNames.ASSET;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Map;
@@ -38,12 +39,12 @@ class BenchmarkTester extends BaseTest {
 		//warm-up
 		measureTime("Write", assetCount, (id) -> assetService.createAsset(id));
 		measureTime("Read", assetCount, (id) -> assetService.findById(id));
-		cacheService.clearStats();
+		cacheService.clearStats(ASSET);
 
 		for (int n = 0; n < 3; n++) {
 			//test
 			measureTime("Read", iterations, (id) -> assetService.findById(random.nextInt(assetCount)));
-			cacheService.printStats();
+			cacheService.printStats(ASSET);
 		}
 	}
 

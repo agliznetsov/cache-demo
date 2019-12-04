@@ -16,6 +16,7 @@
 
 	<properties>
 		<java.version>1.8</java.version>
+		<version.infinispan>10.0.1.Final</version.infinispan>
 	</properties>
 
 	<dependencies>
@@ -31,6 +32,10 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
 
 		<dependency>
 			<groupId>org.postgresql</groupId>
@@ -40,42 +45,37 @@
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-jcache</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.ehcache</groupId>
-			<artifactId>ehcache</artifactId>
-			<version>3.8.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.ehcache</groupId>
-			<artifactId>ehcache-clustered</artifactId>
-			<version>3.8.1</version>
-		</dependency>
-		<dependency>
-			<groupId>com.hazelcast</groupId>
-			<artifactId>hazelcast</artifactId>
-			<version>3.11.5</version>
-		</dependency>
 
 <!--		<dependency>-->
-<!--			<groupId>org.infinispan</groupId>-->
-<!--			<artifactId>infinispan-core</artifactId>-->
-<!--			<version>10.0.1.Final</version>-->
+<!--			<groupId>javax.cache</groupId>-->
+<!--			<artifactId>cache-api</artifactId>-->
 <!--		</dependency>-->
 		<dependency>
 			<groupId>org.infinispan</groupId>
-			<artifactId>infinispan-embedded</artifactId>
-			<version>9.1.7.Final</version>
+			<artifactId>infinispan-core</artifactId>
+			<version>${version.infinispan}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.infinispan</groupId>
+			<artifactId>infinispan-commons</artifactId>
+			<version>${version.infinispan}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.infinispan</groupId>
+			<artifactId>infinispan-jcache</artifactId>
+			<version>${version.infinispan}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.infinispan</groupId>
+			<artifactId>infinispan-hibernate-cache-v53</artifactId>
+			<version>${version.infinispan}</version>
 		</dependency>
 
+
 		<dependency>
-			<groupId>org.openjdk.jmh</groupId>
-			<artifactId>jmh-core</artifactId>
-			<version>1.19</version>
-		</dependency>
-		<dependency>
-			<groupId>org.openjdk.jmh</groupId>
-			<artifactId>jmh-generator-annprocess</artifactId>
-			<version>1.19</version>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
@@ -83,15 +83,11 @@
 			<version>3.9</version>
 		</dependency>
 
+
 		<dependency>
 			<groupId>com.h2database</groupId>
 			<artifactId>h2</artifactId>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.projectlombok</groupId>
-			<artifactId>lombok</artifactId>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>

@@ -2,6 +2,9 @@ package com.example.demo.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
+
+import javax.cache.CacheManager;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -9,6 +12,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.demo.config.CacheNames;
 import com.example.demo.dao.AssetRepository;
 import com.example.demo.dao.ResourceRepository;
 import com.example.demo.model.Asset;
@@ -27,20 +31,41 @@ public class AssetService implements CommandLineRunner {
 	ResourceRepository resourceRepository;
 	@Autowired
 	ApplicationEventPublisher applicationEventPublisher;
+	@Autowired
+	CacheManager cacheManager;
 
 	@Override
 	public void run(String... args) throws Exception {
 	}
 
+	public String cacheGet(String key) {
+		return (String) cacheManager.getCache(CacheNames.ASIDE).get(key);
+	}
+
+	public void cachePut(String key, String value, boolean fail) {
+		cacheManager.getCache(CacheNames.ASIDE).put(key, value);
+		if (fail) {
+			throw new RuntimeException("error");
+		}
+	}
+
 	public void createAsset(int id, String name, String description) {
-//		log.info("createAsset.start");
+		log.info("createAsset.start");
 		Asset asset = new Asset();
 		asset.setId(id);
 		asset.setName(name != null ? name : "name" + id);
 		asset.setDescription(description != null ? description : "description" + id);
 		assetRepository.save(asset);
-//		applicationEventPublisher.publishEvent(new AssetCreatedEvent(this, id));
-//		log.info("createAsset.end");
+		applicationEventPublisher.publishEvent(new AssetCreatedEvent(this, id));
+		log.info("createAsset.end");
+	}
+
+	public void createAssetFast(int id, String name, String description) {
+		Asset asset = new Asset();
+		asset.setId(id);
+		asset.setName(name != null ? name : "name" + id);
+		asset.setDescription(description != null ? description : "description" + id);
+		assetRepository.save(asset);
 	}
 
 	public void createResource(int id, String name, String description) {

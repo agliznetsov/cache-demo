@@ -6,6 +6,7 @@ import javax.cache.CacheManager;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,10 +24,10 @@ public class CacheController {
 	@Autowired
 	CacheManager cacheManager;
 
-	@GetMapping("/stats")
-	public Map getStats() {
+	@GetMapping("/stats/{name}")
+	public Object getStats(@PathVariable String name) {
 		log.info("get cache stats");
-		return cacheService.getStats();
+		return cacheService.getStats(name);
 	}
 
 }
