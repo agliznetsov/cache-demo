@@ -17,10 +17,12 @@ import javax.cache.processor.EntryProcessorException;
 import javax.cache.processor.MutableEntry;
 import javax.transaction.TransactionManager;
 
-import org.infinispan.manager.EmbeddedCacheManager;
+import org.apache.ignite.IgniteCache;
+import org.apache.ignite.cache.CacheMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.example.demo.config.CacheNames;
@@ -41,10 +43,6 @@ class AssetServiceTester extends BaseTest {
 	CacheManager cacheManager;
 	@Autowired
 	AssetCache assetCache;
-	@Autowired
-	EmbeddedCacheManager embeddedCacheManager;
-	@Autowired
-	org.springframework.cache.CacheManager springCacheManager;
 
 	@BeforeEach
 	void setUp() {
@@ -125,33 +123,28 @@ class AssetServiceTester extends BaseTest {
 	}
 
 	@Test
-	void testTxManager() throws Exception {
-		String key = UUID.randomUUID().toString();
-		org.infinispan.Cache<Object,Object> cache = embeddedCacheManager.getCache(CacheNames.ASIDE);
-		TransactionManager tm = cache.getAdvancedCache().getTransactionManager();
-		tm.begin();
-		cache.put(key, "value");
-		tm.rollback();
-		assertNull(cache.get(key));
-	}
-
-	@Test
-	void testCacheLimit() {
+	@Timeout(3)
+	void testCacheLimit() throws Exception {
 		Cache cache = cacheManager.getCache(CacheNames.ASIDE);
 		for (int i = 0; i < 20; i++) {
 			cache.put(String.valueOf(i), String.valueOf(i));
 		}
-		AtomicInteger counter = new AtomicInteger();
-		cache.iterator().forEachRemaining((e) -> counter.incrementAndGet());
-		assertEquals(10, counter.get());
+		IgniteCache igniteCache = (IgniteCache) cache.unwrap(IgniteCache.class);
+		CacheMetrics metrics = igniteCache.metrics();
+		log.info("Puts: {} Evictions: {}", metrics.getCachePuts(),  metrics.getCacheEvictions());
+		assertEquals(20, metrics.getCachePuts());
+		assertEquals(10, metrics.getCacheEvictions());
+
+		int count = countCacheElements(cache);
+		assertEquals(20, count); //heap + off-heap
 	}
 
-	@Test
-	void testSpringManager() throws Exception {
-		String key = UUID.randomUUID().toString();
-		NonSerializable value = springCacheManager.getCache(CacheNames.ASIDE).get(key, () -> new NonSerializable());
-		assertNotNull(value);
+	private int countCacheElements(Cache cache) {
+		AtomicInteger counter = new AtomicInteger();
+		cache.iterator().forEachRemaining((e) -> counter.incrementAndGet());
+		return counter.get();
 	}
+
 
 	public static class NonSerializable {
 		String data = "";

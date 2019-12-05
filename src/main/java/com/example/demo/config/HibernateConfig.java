@@ -1,33 +1,38 @@
 package com.example.demo.config;
 
+import static com.example.demo.config.CacheNames.ASIDE;
+import static com.example.demo.config.CacheNames.ASSET;
+
 import java.io.Serializable;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Properties;
 
 import javax.cache.CacheManager;
 import javax.cache.Caching;
-import javax.cache.spi.CachingProvider;
 
+import org.apache.ignite.Ignite;
+import org.apache.ignite.Ignition;
+import org.apache.ignite.cache.CacheMode;
+import org.apache.ignite.cache.CacheWriteSynchronizationMode;
+import org.apache.ignite.cache.eviction.fifo.FifoEvictionPolicyFactory;
+import org.apache.ignite.configuration.CacheConfiguration;
+import org.apache.ignite.configuration.DataPageEvictionMode;
+import org.apache.ignite.configuration.DataRegionConfiguration;
+import org.apache.ignite.configuration.DataStorageConfiguration;
+import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
+import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
+import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
 import org.hibernate.cache.jcache.ConfigSettings;
-import org.infinispan.Cache;
-import org.infinispan.commons.marshall.JavaSerializationMarshaller;
-import org.infinispan.configuration.cache.CacheMode;
-import org.infinispan.configuration.cache.ConfigurationBuilder;
-import org.infinispan.configuration.cache.StorageType;
-import org.infinispan.configuration.global.GlobalConfigurationBuilder;
-import org.infinispan.configuration.global.TransportConfigurationBuilder;
-import org.infinispan.eviction.EvictionType;
-import org.infinispan.jcache.embedded.JCacheManager;
-import org.infinispan.jcache.embedded.JCachingProvider;
-import org.infinispan.manager.DefaultCacheManager;
-import org.infinispan.manager.EmbeddedCacheManager;
-import org.infinispan.transaction.LockingMode;
-import org.infinispan.transaction.TransactionMode;
+import org.hibernate.cfg.AvailableSettings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer;
 import org.springframework.cache.jcache.JCacheCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import com.example.demo.ignite.CachingProvider;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,8 +47,8 @@ public class HibernateConfig {
 	Boolean clustered;
 
 	@Bean
-	public CacheManager cacheManager(EmbeddedCacheManager embeddedCacheManager) {
-		return new EmbeddedCachingProvider(embeddedCacheManager).getCacheManager();
+	public CacheManager cacheManager(Ignite ignite) {
+		return new CachingProvider(ignite).getCacheManager();
 	}
 
 	@Bean
@@ -52,68 +57,96 @@ public class HibernateConfig {
 	}
 
 	@Bean
-	public EmbeddedCacheManager embeddedCacheManager() {
-		GlobalConfigurationBuilder globalConfig;
-		DefaultCacheManager cacheManager;
+	public Ignite ignite() {
+		IgniteConfiguration cfg = new IgniteConfiguration();
+		cfg.setIgniteInstanceName("demo");
 
-		// Make the default cache a replicated synchronous one
-		ConfigurationBuilder cacheConfig = new ConfigurationBuilder();
-		cacheConfig.jmxStatistics().enable();
-		cacheConfig.memory()
-				.storageType(StorageType.OBJECT)
-				.size(10)
-				.evictionType(EvictionType.COUNT);
+		configureCluster(cfg);
+		//configureStorage(cfg);
+		configureCaches(cfg);
 
-		// Transactional configuration
-		ConfigurationBuilder txConfig = new ConfigurationBuilder();
-		txConfig.jmxStatistics().enable();
-		txConfig.transaction().transactionMode(TransactionMode.TRANSACTIONAL).lockingMode(LockingMode.PESSIMISTIC);
-		txConfig.memory()
-				.storageType(StorageType.OBJECT)
-				.size(10)
-				.evictionType(EvictionType.COUNT);
+		// Start Ignite node.
+		return Ignition.start(cfg);
+	}
 
-		if (clustered) {
-			// Initialize clustered cache manager
-			globalConfig = GlobalConfigurationBuilder.defaultClusteredBuilder();
-			globalConfig.transport().clusterName("demo").addProperty("configurationFile", "jgroups-udp.xml");
-			cacheConfig.clustering().cacheMode(CacheMode.valueOf(cacheConsistency));
-		} else {
-			// Initialize local cache manager
-			globalConfig = new GlobalConfigurationBuilder().defaultCacheName("default-cache");
-		}
+	private void configureCaches(IgniteConfiguration cfg) {
+		cfg.setCacheConfiguration(getCacheConfiguration(ASSET, 100), getCacheConfiguration(ASIDE, 10));
+	}
 
-		globalConfig.defaultCacheName("default-cache");
-		globalConfig.globalJmxStatistics().enable();
-		globalConfig.serialization().marshaller(new SimpleSerializationMarshaller());
+	private void configureCluster(IgniteConfiguration cfg) {
+		// Explicitly configure TCP discovery SPI to provide list of initial nodes
+		// from the first cluster.
+		TcpDiscoverySpi discoverySpi = new TcpDiscoverySpi();
 
-		cacheManager = new DefaultCacheManager(globalConfig.build(), cacheConfig.build());
+		// Initial local port to listen to.
+		discoverySpi.setLocalPort(48500);
 
-		cacheManager.createCache(CacheNames.ASIDE, txConfig.build());
+		// Changing local port range. This is an optional action.
+		discoverySpi.setLocalPortRange(20);
 
-		log.info("Cluster name: {}", cacheManager.getClusterName());
-		log.info("Cluster size: {}", cacheManager.getClusterSize());
-		log.info("Cluster members: {}", cacheManager.getClusterMembers());
+		TcpDiscoveryVmIpFinder ipFinder = new TcpDiscoveryVmIpFinder();
 
-		return cacheManager;
+		// Addresses and port range of the nodes from the first cluster.
+		// 127.0.0.1 can be replaced with actual IP addresses or host names.
+		// The port range is optional.
+		ipFinder.setAddresses(Arrays.asList("127.0.0.1:48500..48520"));
+
+		// Overriding IP finder.
+		discoverySpi.setIpFinder(ipFinder);
+
+		// Explicitly configure TCP communication SPI by changing local port number for
+		// the nodes from the first cluster.
+		TcpCommunicationSpi commSpi = new TcpCommunicationSpi();
+
+		commSpi.setLocalPort(48100);
+
+		// Overriding discovery SPI.
+		cfg.setDiscoverySpi(discoverySpi);
+
+		// Overriding communication SPI.
+		cfg.setCommunicationSpi(commSpi);
+	}
+
+	private void configureStorage(IgniteConfiguration cfg) {
+		// Durable Memory configuration.
+		DataStorageConfiguration storageCfg = new DataStorageConfiguration();
+
+		// Creating a new data region.
+		DataRegionConfiguration regionCfg = new DataRegionConfiguration();
+
+		// Region name.
+		regionCfg.setName("default");
+
+		// 10 MB initial size (RAM).
+		regionCfg.setInitialSize(10L * 1024 * 1024);
+
+		// 20 MB max size (RAM).
+		regionCfg.setMaxSize(20L * 1024 * 1024);
+
+		// Enabling RANDOM_LRU eviction for this region.
+		regionCfg.setPageEvictionMode(DataPageEvictionMode.RANDOM_LRU);
+
+		// Setting the data region configuration.
+		storageCfg.setDataRegionConfigurations(regionCfg);
+
+		cfg.setDataStorageConfiguration(storageCfg);
+	}
+
+	private CacheConfiguration getCacheConfiguration(String name, int size) {
+		CacheConfiguration cfg = new CacheConfiguration<>(name);
+		cfg.setStatisticsEnabled(true);
+		cfg.setCacheMode(CacheMode.REPLICATED);
+		cfg.setWriteSynchronizationMode(CacheWriteSynchronizationMode.FULL_SYNC);
+		cfg.setStoreByValue(true);
+		cfg.setCopyOnRead(false);
+		cfg.setOnheapCacheEnabled(true);
+		cfg.setEvictionPolicyFactory(new FifoEvictionPolicyFactory(size));
+		return cfg;
 	}
 
 	@Bean
 	public HibernatePropertiesCustomizer hibernatePropertiesCustomizer(CacheManager cacheManager) {
 		return hibernateProperties -> hibernateProperties.put(ConfigSettings.CACHE_MANAGER, cacheManager);
-	}
-
-	public static class EmbeddedCachingProvider extends JCachingProvider {
-		private final EmbeddedCacheManager embeddedCacheManager;
-
-		public EmbeddedCachingProvider(EmbeddedCacheManager embeddedCacheManager) {
-			this.embeddedCacheManager = embeddedCacheManager;
-		}
-
-		@Override
-		protected CacheManager createCacheManager(ClassLoader classLoader, URI uri, Properties properties) {
-			return new JCacheManager(uri, embeddedCacheManager, this);
-		}
 	}
 
 }
