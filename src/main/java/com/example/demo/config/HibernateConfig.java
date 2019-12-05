@@ -60,6 +60,7 @@ public class HibernateConfig {
 	public Ignite ignite() {
 		IgniteConfiguration cfg = new IgniteConfiguration();
 		cfg.setIgniteInstanceName("demo");
+		cfg.setWorkDirectory(System.getProperty("java.io.tmpdir"));
 
 		configureCluster(cfg);
 		//configureStorage(cfg);

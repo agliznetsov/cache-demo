@@ -44,6 +44,7 @@ public class IgniteDemo {
 
 	private void run() throws Exception {
 		IgniteConfiguration cfg = new IgniteConfiguration();
+		cfg.setWorkDirectory(System.getProperty("java.io.tmpdir"));
 
 		configureCluster(cfg);
 
