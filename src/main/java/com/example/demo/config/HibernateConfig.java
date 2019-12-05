@@ -1,5 +1,6 @@
 package com.example.demo.config;
 
+import java.io.Serializable;
 import java.net.URI;
 import java.util.Properties;
 
@@ -9,6 +10,7 @@ import javax.cache.spi.CachingProvider;
 
 import org.hibernate.cache.jcache.ConfigSettings;
 import org.infinispan.Cache;
+import org.infinispan.commons.marshall.JavaSerializationMarshaller;
 import org.infinispan.configuration.cache.CacheMode;
 import org.infinispan.configuration.cache.ConfigurationBuilder;
 import org.infinispan.configuration.cache.StorageType;
@@ -35,7 +37,7 @@ public class HibernateConfig {
 	@Value("${demo.cache.consistency:REPL_SYNC}")
 	String cacheConsistency;
 
-	@Value("${demo.cache.clustered:true}")
+	@Value("${demo.cache.clustered:false}")
 	Boolean clustered;
 
 	@Bean
@@ -45,6 +47,7 @@ public class HibernateConfig {
 
 	@Bean
 	public EmbeddedCacheManager embeddedCacheManager() {
+		GlobalConfigurationBuilder globalConfig;
 		DefaultCacheManager cacheManager;
 
 		// Make the default cache a replicated synchronous one
@@ -64,30 +67,29 @@ public class HibernateConfig {
 				.size(10)
 				.evictionType(EvictionType.COUNT);
 
-		// Initialize clustered cache manager
 		if (clustered) {
+			// Initialize clustered cache manager
+			globalConfig = GlobalConfigurationBuilder.defaultClusteredBuilder();
+			globalConfig.transport().clusterName("demo").addProperty("configurationFile", "jgroups-udp.xml");
 			cacheConfig.clustering().cacheMode(CacheMode.valueOf(cacheConsistency));
-
-			TransportConfigurationBuilder globalConfig = GlobalConfigurationBuilder.defaultClusteredBuilder()
-					.defaultCacheName("default-cache")
-					.globalJmxStatistics().enable()
-					.transport().clusterName("demo").addProperty("configurationFile", "jgroups-udp.xml");
-
-			cacheManager = new DefaultCacheManager(globalConfig.build(), cacheConfig.build());
-
-			log.info("Cluster name: {}", cacheManager.getClusterName());
-			log.info("Cluster size: {}", cacheManager.getClusterSize());
-			log.info("Cluster members: {}", cacheManager.getClusterMembers());
-
 		} else {
-			GlobalConfigurationBuilder globalConfig = new GlobalConfigurationBuilder().defaultCacheName("default-cache");
 			// Initialize local cache manager
-			cacheManager = new DefaultCacheManager(globalConfig.build(), cacheConfig.build());
+			globalConfig = new GlobalConfigurationBuilder().defaultCacheName("default-cache");
 		}
+
+		globalConfig.defaultCacheName("default-cache");
+		globalConfig.globalJmxStatistics().enable();
+		globalConfig.serialization().marshaller(new SimpleSerializationMarshaller());
+
+		cacheManager = new DefaultCacheManager(globalConfig.build(), cacheConfig.build());
 
 		cacheManager.defineConfiguration("tx", txConfig.build());
 
-		Cache<Object,Object> cache = cacheManager.getCache(CacheNames.ASIDE, "tx");
+		cacheManager.getCache(CacheNames.ASIDE, "tx");
+
+		log.info("Cluster name: {}", cacheManager.getClusterName());
+		log.info("Cluster size: {}", cacheManager.getClusterSize());
+		log.info("Cluster members: {}", cacheManager.getClusterMembers());
 
 		return cacheManager;
 	}
