@@ -2,6 +2,7 @@ package com.example.demo;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -11,6 +12,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.cache.Cache;
 import javax.cache.CacheManager;
+import javax.cache.processor.EntryProcessor;
+import javax.cache.processor.EntryProcessorException;
+import javax.cache.processor.MutableEntry;
 import javax.transaction.TransactionManager;
 
 import org.infinispan.manager.EmbeddedCacheManager;
@@ -39,6 +43,8 @@ class AssetServiceTester extends BaseTest {
 	AssetCache assetCache;
 	@Autowired
 	EmbeddedCacheManager embeddedCacheManager;
+	@Autowired
+	org.springframework.cache.CacheManager springCacheManager;
 
 	@BeforeEach
 	void setUp() {
@@ -138,6 +144,17 @@ class AssetServiceTester extends BaseTest {
 		AtomicInteger counter = new AtomicInteger();
 		cache.iterator().forEachRemaining((e) -> counter.incrementAndGet());
 		assertEquals(10, counter.get());
+	}
+
+	@Test
+	void testSpringManager() throws Exception {
+		String key = UUID.randomUUID().toString();
+		NonSerializable value = springCacheManager.getCache(CacheNames.ASIDE).get(key, () -> new NonSerializable());
+		assertNotNull(value);
+	}
+
+	public static class NonSerializable {
+		String data = "";
 	}
 
 }

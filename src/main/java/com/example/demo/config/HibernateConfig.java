@@ -25,6 +25,7 @@ import org.infinispan.transaction.LockingMode;
 import org.infinispan.transaction.TransactionMode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer;
+import org.springframework.cache.jcache.JCacheCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -43,6 +44,11 @@ public class HibernateConfig {
 	@Bean
 	public CacheManager cacheManager(EmbeddedCacheManager embeddedCacheManager) {
 		return new EmbeddedCachingProvider(embeddedCacheManager).getCacheManager();
+	}
+
+	@Bean
+	public org.springframework.cache.CacheManager springCacheManager(CacheManager cacheManager) {
+		return new JCacheCacheManager(cacheManager);
 	}
 
 	@Bean
@@ -83,9 +89,7 @@ public class HibernateConfig {
 
 		cacheManager = new DefaultCacheManager(globalConfig.build(), cacheConfig.build());
 
-		cacheManager.defineConfiguration("tx", txConfig.build());
-
-		cacheManager.getCache(CacheNames.ASIDE, "tx");
+		cacheManager.createCache(CacheNames.ASIDE, txConfig.build());
 
 		log.info("Cluster name: {}", cacheManager.getClusterName());
 		log.info("Cluster size: {}", cacheManager.getClusterSize());
