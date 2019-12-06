@@ -28,4 +28,11 @@ public class Asset {
 	private String name;
 
 	private String description;
+
+	private long time;
+
+	private String name2;
+	private String name3;
+	private String name4;
+	private String name5;
 }

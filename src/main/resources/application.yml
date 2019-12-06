@@ -24,7 +24,7 @@ spring:
         javax:
           cache:
             missing_cache_strategy: create
-          use_second_level_cache: true
+          use_second_level_cache: false
           region:
             #required - classpath to cache region factory.
             factory_class: org.hibernate.cache.jcache.internal.JCacheRegionFactory
@@ -33,11 +33,11 @@ spring:
 
 
   datasource:
-    url: "jdbc:postgresql://${DB_HOST}/demo"
+    url: "jdbc:postgresql://${DB_HOST:192.168.1.20}/demo"
     username: demo
     password: demo
 
 demo:
   cache:
-    consistency: "${CACHE_CONSISTENCY}"
+    consistency: "${CACHE_CONSISTENCY:REPL_SYNC}"
 
