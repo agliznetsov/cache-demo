@@ -8,11 +8,16 @@ import javax.cache.Cache;
 import javax.cache.CacheManager;
 
 import com.hazelcast.config.Config;
+import com.hazelcast.config.EvictionConfig;
+import com.hazelcast.config.EvictionPolicy;
 import com.hazelcast.config.InMemoryFormat;
+import com.hazelcast.config.NearCacheConfig;
 import com.hazelcast.config.ReplicatedMapConfig;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.IMap;
 import com.hazelcast.core.ReplicatedMap;
+import com.hazelcast.monitor.LocalMapStats;
 import com.hazelcast.monitor.LocalReplicatedMapStats;
 
 import lombok.extern.slf4j.Slf4j;
@@ -45,8 +50,14 @@ public class CacheDemo {
 		config.getNetworkConfig().getJoin().getTcpIpConfig().setMembers(
 				Arrays.asList("localhost:5701", "localhost:5702", "localhost:5703", "localhost:5704", "localhost:5705"));
 
-		ReplicatedMapConfig replicatedMapConfig = config.getReplicatedMapConfig("elements");
-		replicatedMapConfig.setInMemoryFormat(InMemoryFormat.OBJECT);
+		NearCacheConfig nearCacheConfig = new NearCacheConfig()
+				.setInMemoryFormat(InMemoryFormat.OBJECT)
+				.setInvalidateOnChange(true)
+				.setTimeToLiveSeconds(0);
+
+		config.getMapConfig("elements")
+				.setInMemoryFormat(InMemoryFormat.OBJECT)
+				.setNearCacheConfig(nearCacheConfig);
 
 		hazel = Hazelcast.newHazelcastInstance(config);
 
@@ -61,7 +72,8 @@ public class CacheDemo {
 
 	private void testWrite() {
 //		Cache<Integer, CacheElement> cache = cacheManager.getCache("elements");
-		ReplicatedMap<Integer, CacheElement> cache = hazel.getReplicatedMap("elements");
+//		ReplicatedMap<Integer, CacheElement> cache = hazel.getReplicatedMap("elements");
+		IMap<Integer, CacheElement> cache = hazel.getMap("elements");
 		while (true) {
 			long count = 0;
 			long start = System.currentTimeMillis();
@@ -72,11 +84,14 @@ public class CacheDemo {
 			}
 			double time = System.currentTimeMillis() - start;
 			log.info("Write Time: {} Count: {} ms/op: {}", time, count, (time / count));
+			LocalMapStats stats = cache.getLocalMapStats();
+			log.info("Owned {}", stats.getOwnedEntryCount());
 		}
 	}
 
 	private void testRead() {
-		ReplicatedMap<Integer, CacheElement> cache = hazel.getReplicatedMap("elements");
+//		ReplicatedMap<Integer, CacheElement> cache = hazel.getReplicatedMap("elements");
+		IMap<Integer, CacheElement> cache = hazel.getMap("elements");
 		while(true) {
 			long count = 0;
 			long sum = 0;
@@ -90,8 +105,8 @@ public class CacheDemo {
 			}
 			double time = System.currentTimeMillis() - start;
 			log.info("Read Time: {} Count: {} sum: {} ms/op: {}", time, count, sum, (time / count));
-			LocalReplicatedMapStats stats = cache.getReplicatedMapStats();
-//			log.info("Stats {}", stats);
+			LocalMapStats stats = cache.getLocalMapStats();
+			log.info("Owned {}", stats.getOwnedEntryCount());
 		}
 	}
 
