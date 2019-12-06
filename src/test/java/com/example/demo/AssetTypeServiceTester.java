@@ -16,7 +16,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import com.example.demo.model.AssetType;
 import com.example.demo.service.AssetService;
 import com.example.demo.service.AssetTypeService;
-import com.example.demo.service.CacheService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,8 +24,6 @@ class AssetTypeServiceTester extends BaseTest {
 
 	@Autowired
 	AssetTypeService assetTypeService;
-	@Autowired
-	CacheService cacheService;
 
 	@BeforeEach
 	void setUp() {
@@ -41,12 +38,10 @@ class AssetTypeServiceTester extends BaseTest {
 		}
 		assertEquals(5, assetTypeService.getParentTypeIds(assetType.getId()).size());
 
-		cacheService.clearStats();
 		String typeId = assetType.getId();
 		log.info("------------------------------------");
 		measureTime("GetParent", 1000, (i) -> assetTypeService.getParentTypeIds(typeId));
 		log.info("------------------------------------");
-		cacheService.printStats();
 	}
 
 }

@@ -10,9 +10,3 @@ services:
       POSTGRES_DB: demo
       POSTGRES_USER: demo
       POSTGRES_PASSWORD: demo
-
-  tc-server:
-    image: terracotta/terracotta-server-oss:5.6.4
-    ports:
-      - 9410:9410
-

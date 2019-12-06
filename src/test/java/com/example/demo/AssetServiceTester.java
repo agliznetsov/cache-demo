@@ -16,7 +16,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import com.example.demo.service.AssetCache;
 import com.example.demo.service.AssetService;
-import com.example.demo.service.CacheService;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -25,8 +24,6 @@ class AssetServiceTester extends BaseTest {
 
 	@Autowired
 	AssetService assetService;
-	@Autowired
-	CacheService cacheService;
 	@Autowired
 	CacheManager cacheManager;
 	@Autowired
@@ -85,12 +82,9 @@ class AssetServiceTester extends BaseTest {
 			assetService.createAsset(i);
 		}
 
-		cacheService.clearStats();
-
-		for (int i = 0; i < 1000; i++) {
+		for (int i = 0; i < 100; i++) {
 			assetService.findById(random.nextInt(10));
 		}
-		cacheService.printStats();
 	}
 
 }

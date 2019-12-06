@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.example.demo.service.AssetService;
-import com.example.demo.service.CacheService;
 import com.example.demo.service.CommunityService;
 
 import lombok.extern.slf4j.Slf4j;

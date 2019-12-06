@@ -30,11 +30,7 @@ spring:
 
 
   datasource:
-    url: "jdbc:postgresql://${DB_HOST}/demo"
+    url: "jdbc:postgresql://${DB_HOST:localhost}/demo"
     username: demo
     password: demo
 
-demo:
-  cache:
-    tc-host: "${TC_HOST}"
-    consistency: "${CACHE_CONSISTENCY}"

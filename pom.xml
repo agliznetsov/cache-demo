@@ -41,42 +41,11 @@
 			<artifactId>hibernate-jcache</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.ehcache</groupId>
-			<artifactId>ehcache</artifactId>
-			<version>3.8.1</version>
-		</dependency>
-		<dependency>
-			<groupId>org.ehcache</groupId>
-			<artifactId>ehcache-clustered</artifactId>
-			<version>3.8.1</version>
-		</dependency>
-		<dependency>
 			<groupId>com.hazelcast</groupId>
 			<artifactId>hazelcast</artifactId>
 			<version>3.11.5</version>
 		</dependency>
 
-<!--		<dependency>-->
-<!--			<groupId>org.infinispan</groupId>-->
-<!--			<artifactId>infinispan-core</artifactId>-->
-<!--			<version>10.0.1.Final</version>-->
-<!--		</dependency>-->
-		<dependency>
-			<groupId>org.infinispan</groupId>
-			<artifactId>infinispan-embedded</artifactId>
-			<version>9.1.7.Final</version>
-		</dependency>
-
-		<dependency>
-			<groupId>org.openjdk.jmh</groupId>
-			<artifactId>jmh-core</artifactId>
-			<version>1.19</version>
-		</dependency>
-		<dependency>
-			<groupId>org.openjdk.jmh</groupId>
-			<artifactId>jmh-generator-annprocess</artifactId>
-			<version>1.19</version>
-		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
@@ -113,7 +82,7 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
-					<mainClass>com.example.demo.InfinispanDemo</mainClass>
+					<mainClass>com.example.demo.CacheDemo</mainClass>
 				</configuration>
 			</plugin>
 		</plugins>
