@@ -1,5 +1,7 @@
 package com.example.demo;
 
+import static org.apache.ignite.IgniteSystemProperties.IGNITE_NO_DISCO_ORDER;
+
 import java.util.Arrays;
 import java.util.Random;
 
@@ -17,9 +19,13 @@ import org.apache.ignite.configuration.DataPageEvictionMode;
 import org.apache.ignite.configuration.DataRegionConfiguration;
 import org.apache.ignite.configuration.DataStorageConfiguration;
 import org.apache.ignite.configuration.IgniteConfiguration;
+import org.apache.ignite.internal.processors.cache.persistence.wal.reader.StandaloneNoopCommunicationSpi;
+import org.apache.ignite.internal.processors.cache.persistence.wal.reader.StandaloneNoopDiscoverySpi;
 import org.apache.ignite.spi.communication.tcp.TcpCommunicationSpi;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.apache.ignite.spi.discovery.tcp.ipfinder.vm.TcpDiscoveryVmIpFinder;
+
+import com.example.demo.ignite.StandaloneDiscoverySpi;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -46,7 +52,9 @@ public class IgniteDemo {
 		IgniteConfiguration cfg = new IgniteConfiguration();
 		cfg.setWorkDirectory(System.getProperty("java.io.tmpdir"));
 
-		configureCluster(cfg);
+//		configureCluster(cfg);
+
+		configureStandalone(cfg);
 
 		cfg.setIgniteInstanceName("demo");
 
@@ -69,23 +77,28 @@ public class IgniteDemo {
 		}
 	}
 
+	private void configureStandalone(IgniteConfiguration cfg) {
+		cfg.setDiscoverySpi(new StandaloneDiscoverySpi());
+		System.setProperty(IGNITE_NO_DISCO_ORDER, "true");
+	}
+
 	private void configureCluster(IgniteConfiguration cfg) {
 		// Explicitly configure TCP discovery SPI to provide list of initial nodes
 		// from the first cluster.
 		TcpDiscoverySpi discoverySpi = new TcpDiscoverySpi();
 
 		// Initial local port to listen to.
-		discoverySpi.setLocalPort(48500);
+//		discoverySpi.setLocalPort(48500);
 
 		// Changing local port range. This is an optional action.
-		discoverySpi.setLocalPortRange(20);
+//		discoverySpi.setLocalPortRange(20);
 
 		TcpDiscoveryVmIpFinder ipFinder = new TcpDiscoveryVmIpFinder();
 
 		// Addresses and port range of the nodes from the first cluster.
 		// 127.0.0.1 can be replaced with actual IP addresses or host names.
 		// The port range is optional.
-		ipFinder.setAddresses(Arrays.asList("192.168.1.20:48500..48520", "192.168.1.19:48500..48520"));
+		ipFinder.setAddresses(Arrays.asList("localhost"));
 
 		// Overriding IP finder.
 		discoverySpi.setIpFinder(ipFinder);
@@ -105,7 +118,7 @@ public class IgniteDemo {
 
 	private CacheConfiguration getCacheConfiguration(String name) {
 		CacheConfiguration cfg = new CacheConfiguration<>(name);
-		cfg.setCacheMode(CacheMode.REPLICATED);
+		cfg.setCacheMode(CacheMode.LOCAL);
 		cfg.setWriteSynchronizationMode(CacheWriteSynchronizationMode.FULL_ASYNC);
 		cfg.setStoreByValue(true);
 		cfg.setCopyOnRead(false);
