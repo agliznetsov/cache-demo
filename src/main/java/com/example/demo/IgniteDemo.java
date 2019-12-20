@@ -50,7 +50,8 @@ public class IgniteDemo {
 
 	private void run() throws Exception {
 		IgniteConfiguration cfg = new IgniteConfiguration();
-		cfg.setWorkDirectory(System.getProperty("java.io.tmpdir"));
+//		cfg.setWorkDirectory(System.getProperty("java.io.tmpdir"));
+		cfg.setWorkDirectory("/dev/null");
 
 //		configureCluster(cfg);
 
@@ -61,7 +62,10 @@ public class IgniteDemo {
 		cfg.setCacheConfiguration(getCacheConfiguration("time"), getCacheConfiguration("elements"));
 
 		// Start Ignite node.
+		long start = System.currentTimeMillis();
 		ignite = Ignition.start(cfg);
+		long end = System.currentTimeMillis();
+		System.out.println("STARTED IN " + (end - start) + " MS");
 
 		if ("timeWriter".equals(runMode)) {
 			timeWriter();
@@ -78,8 +82,18 @@ public class IgniteDemo {
 	}
 
 	private void configureStandalone(IgniteConfiguration cfg) {
-		cfg.setDiscoverySpi(new StandaloneDiscoverySpi());
-		System.setProperty(IGNITE_NO_DISCO_ORDER, "true");
+		TcpDiscoverySpi discoverySpi = new TcpDiscoverySpi();
+		discoverySpi.setAckTimeout(1);
+		discoverySpi.setJoinTimeout(1);
+		discoverySpi.setAckTimeout(1);
+		discoverySpi.setSocketTimeout(1);
+		discoverySpi.setConnectionRecoveryTimeout(1);
+		discoverySpi.setMaxAckTimeout(2);
+
+		TcpDiscoveryVmIpFinder ipFinder = new TcpDiscoveryVmIpFinder(true);
+		discoverySpi.setIpFinder(ipFinder);
+
+		cfg.setDiscoverySpi(discoverySpi);
 	}
 
 	private void configureCluster(IgniteConfiguration cfg) {
