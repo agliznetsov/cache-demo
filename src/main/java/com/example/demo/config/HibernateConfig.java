@@ -43,6 +43,9 @@ public class HibernateConfig {
 	@Value("${demo.cache.consistency:REPL_SYNC}")
 	String cacheConsistency;
 
+	@Value("${demo.cache.addresses:}")
+	String addresses;
+
 	@Bean
 	public CacheManager cacheManager(Ignite ignite) {
 		return new CachingProvider(ignite).getCacheManager();
@@ -87,7 +90,8 @@ public class HibernateConfig {
 		// Addresses and port range of the nodes from the first cluster.
 		// 127.0.0.1 can be replaced with actual IP addresses or host names.
 		// The port range is optional.
-		ipFinder.setAddresses(Arrays.asList("192.168.1.20:48500..48520", "192.168.1.19:48500..48520"));
+		log.info("Ignite Address List: {}", addresses);
+		ipFinder.setAddresses(Arrays.asList(addresses.split(",")));
 
 		// Overriding IP finder.
 		discoverySpi.setIpFinder(ipFinder);

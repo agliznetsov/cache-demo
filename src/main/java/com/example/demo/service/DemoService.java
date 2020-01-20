@@ -3,6 +3,7 @@ package com.example.demo.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -12,6 +13,7 @@ import java.util.concurrent.Executors;
 
 @Slf4j
 @Component
+@Profile("demo")
 public class DemoService implements CommandLineRunner {
     @Autowired
     AssetService assetService;

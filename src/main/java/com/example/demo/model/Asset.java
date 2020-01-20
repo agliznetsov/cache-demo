@@ -18,7 +18,7 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(indexes = {@Index(name = "ix_asset_name", unique = true, columnList = "name")})
+@Table(indexes = {@Index(name = "ix_asset_name", unique = false, columnList = "name")})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE, region = ASSET)
 public class Asset {

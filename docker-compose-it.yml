@@ -11,11 +11,6 @@ services:
       POSTGRES_USER: demo
       POSTGRES_PASSWORD: demo
 
-  tc-server:
-    image: terracotta/terracotta-server-oss:5.6.4
-    ports:
-      - 9410:9410
-
   demo1:
     image: cache-demo
     ports:
@@ -23,10 +18,10 @@ services:
     environment:
       DB_HOST: postgres
       TC_HOST: tc-server
-      CACHE_CONSISTENCY: EVENTUAL
+      CACHE_CONSISTENCY: REPL_SYNC
+      ADDRESS_LIST: "demo1,demo2"
     depends_on:
       - postgres
-      - tc-server
 
   demo2:
     image: cache-demo
@@ -35,7 +30,7 @@ services:
     environment:
       DB_HOST: postgres
       TC_HOST: tc-server
-      CACHE_CONSISTENCY: EVENTUAL
+      CACHE_CONSISTENCY: REPL_SYNC
+      ADDRESS_LIST: "demo1,demo2"
     depends_on:
       - postgres
-      - tc-server

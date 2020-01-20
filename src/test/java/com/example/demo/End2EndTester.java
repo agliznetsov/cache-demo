@@ -3,6 +3,7 @@ package com.example.demo;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import lombok.extern.slf4j.Slf4j;
@@ -58,9 +59,6 @@ public class End2EndTester {
 			assertEquals(name, client1.getAsset(i).getName());
 			assertEquals(name, client2.getAsset(i).getName());
 		}
-
-		log.info("{}", client1.getStats());
-		log.info("{}", client2.getStats());
 	}
 
 	@Test
@@ -80,12 +78,10 @@ public class End2EndTester {
 		//then
 		assertEquals(2, client1.findAssetByName("aaa").size());
 		assertEquals(2, client2.findAssetByName("aaa").size());
-
-		log.info("{}", client1.getStats());
-		log.info("{}", client2.getStats());
 	}
 
 	@Test
+	@Disabled
 	void printStats() {
 		log.info("{}", client1.getStats());
 	}

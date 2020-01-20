@@ -5,7 +5,7 @@ logging:
 
 spring:
   jpa:
-    show-sql: true
+    show-sql: false
     properties:
 #      javax:
 #        persistence:
@@ -33,11 +33,12 @@ spring:
 
 
   datasource:
-    url: "jdbc:postgresql://${DB_HOST:192.168.1.20}/demo"
+    url: "jdbc:postgresql://${DB_HOST:localhost}/demo"
     username: demo
     password: demo
 
 demo:
   cache:
     consistency: "${CACHE_CONSISTENCY:REPL_SYNC}"
+    addresses: ${ADDRESS_LIST:localhost:48500..48520}
 

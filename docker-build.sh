@@ -1,2 +1,2 @@
-mvn clean pacakge -DskipTests
+mvn clean package -DskipTests
 docker build -t cache-demo .
